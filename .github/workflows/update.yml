@@ -37,4 +37,4 @@ jobs:
       # Run your script
       - name: Run weather update
         run: |
-          python update_weather.py
+          python update_weather_data.py
