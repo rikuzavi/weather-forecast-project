@@ -2,6 +2,7 @@ import io
 import json
 import pandas as pd
 import requests
+import time
 from datetime import datetime,timedelta
 from zoneinfo import ZoneInfo
 from google.oauth2 import service_account
@@ -20,8 +21,6 @@ creds = service_account.Credentials.from_service_account_file(
 service = build("drive", "v3", credentials=creds)
 # getting data
 def getdata():
-
-
     # Download file
     request = service.files().get_media(fileId=FILE_ID)
 
@@ -96,8 +95,9 @@ for city in df:
 print('waiting to upload')
 
 upload_buffer = io.BytesIO(
-    json.dumps(df_output, indent=4).encode("utf-8")
+    json.dumps(df_output).encode("utf-8")
 )
+upload_buffer.seek(0)
 
 media = MediaIoBaseUpload(
     upload_buffer,
@@ -105,9 +105,24 @@ media = MediaIoBaseUpload(
     resumable=True
 )
 
-updated_file = service.files().update(
-    fileId=FILE_ID,
-    media_body=media
-).execute()
+for attempt in range(5):
+    try:
+        request = service.files().update(
+            fileId=FILE_ID,
+            media_body=media
+        )
 
-print('uploading done')
+        response = None
+        while response is None:
+            status, response = request.next_chunk()
+
+        print("Upload completed.")
+        break
+
+    except Exception as e:
+        print(f"Upload attempt {attempt+1} failed:", e)
+
+        if attempt == 4:
+            raise
+
+        time.sleep(10)
