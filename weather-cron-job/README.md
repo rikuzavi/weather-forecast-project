@@ -5,24 +5,31 @@
 Every 1AM the GitHub triggers the code and workflow job it takes the data, modify it, push it to Drive 
 
 GitHub Repository
+
         │
         ▼
 GitHub Actions starts automatically
+
         │
         ▼
 Installs Python and required packages
+
         │
         ▼
 Creates service_account.json from GitHub Secret
+
         │
         ▼
 Runs your Python script
+
         │
         ▼
 Downloads/updates weather data
+
         │
         ▼
 Uploads the updated JSON back to Google Drive
+
         │
         ▼
 Workflow finishes
@@ -39,9 +46,13 @@ f) run the workflow for once then let it run itself at a particular time
 FILE STRUCTURE 
 -------------------------------
 weather-cron-job
+
 | ----requirements.txt
+
 | ----update_weather_data.py
+
 | ----westbengal_cities.json
+
 | ----weather-project-XXXXXX-XXXXXX.json (Hidden, gitignore, shouldn't be uploaded)
 
 SERVICE ACCOUNT CREATION
