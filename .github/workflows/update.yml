@@ -1,0 +1,40 @@
+name: Weather Update
+
+on:
+  schedule:
+    # 1:00 AM IST = 19:30 UTC previous day
+    - cron: '30 19 * * *'
+
+  workflow_dispatch:
+
+jobs:
+  update:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: weather_updater
+
+    steps:
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install packages
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Create Service Account File
+      run: |
+        echo '${{ secrets.GCP_SERVICE_ACCOUNT }}' > weather-project-503316-7928a8a4716c.json
+
+    - name: Run Weather Script
+      run: |
+        python update_weather.py
