@@ -146,20 +146,7 @@ weather-project-XXXXXX-XXXXXX.json FILE CONTENT
 -------------------------------------------------------
 This is a content when you will download the service account json
 You will also find the service mail over there 
-
-{
-  "type": "service_account",
-  "project_id": "weather-project-503316",
-  "private_key_id": "7928a8a4716c75582a8bdfdb69229850ffd652df",
-  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDDGuYoWDl9ELoG\nNrSTFIlLOKZGsZo7b0fXP1/EQuQrOxM4GxLhR617atprMADmZKyJWtGXRjP7kX0l\n/qNXlODetrGweIONQneDkILtkjT75/zmprUSRRiAYsUAZtV34CJTA2sSSJMEyfIZ\nQE1cB/1BWqM782H3mXcKWum/WI9sierzQhnJwj3p7zetMTYOPncPQgMVyd8wTjnQ\njpePen6l9UalK99//2Dx+3ZmlIA5EN4zF/SYhN/6NsvGbQB0c/EBk2cYiOlpBQNH\n4wZtXPYY5eEPN4w7OKGKwl5HD92dwdxZh/2PWWRfe3TF9Jlys/ggPhfXMwH1HLDk\n8f+k4vUxAgMBAAECggEAA1WSWV4onVqL009cBqdzMTXmoY6ndBySvbr3iAMcoyB/\nU5Yi3Ha9ID7TPMG1Qjq2OCK1MkCg4su5t8yCPhztOuEkaD+m/+MC59ywYB7/iM6O\nI+L1dTp5ELifZUJco4/RBloomkdjO9G3sXbH26rHSTajU4L1SaX1wteK5xo8WT56\ncYdRNZlfcIc810r9bKGpCSnem7rlC0Z8+hF93OLwYdnLNDiMlQFIpPPed5xS8H9i\n1HHKB9wPRWroWCNhwH5xlxXV0tIMFklCWUWSqmhsELlyJI3rq48F3R61DzvaDQ68\nSzXDWSWrBQNEezxZ2VuP2hOsvKU7QBi6QjEduLK4AQKBgQD+WNtzzFql3fn4gMKL\n2G8US1vYrDNNeSEXIaZ99fsJW9+Y3t0HzKhxRvvMjiLgSpLniH87cjJEF5CjDne3\nNdygDYeD0Qr0LoAtichwP8NXptXejL3lVO+TqwFmeABj+EUomIMwjGupXY3Ch7TR\nu2mhmLm7w/9TJ8x3zrwI3EP+KQKBgQDEX3v3Jt8gwUn2Xdekz56MLUrKC/zK0cwp\n3syv6cWRc6T7B0dYQnS7CuGf6ENT26y+7wbJOt+bjDVMmAVPrEK5vyYxwgkt1o3V\nKgHqS/rh1zPtBh4sDBHfNnr778Q1yAzZtZPCSgK4kPLXKB20IBxY5cvx8dZzEePM\niKOytjwPyQKBgHXEnPA0OfC9JEYtEGeCMoSaFA/yQ9rmcCzuttFx+Oevc4ur/Xnk\nCEZTELn5QirKPNUZ/Zd/28hthNoLE+Fv/hTZztp5C3JeqZjsSDO5QnCuXi6qyi6K\nsleUgZR5key4AwW2AGCVVDBakg31mgLWnSVmuvE24l0Ve3Yp8iTEIHNpAoGAPWFv\nOTjAQ9fHC6gXkJ+I+l3p46/Ni4P6YhgPOOlEZQuVxRVoWpEjNZfYIIiUCvE+VMwX\n/exWGqO/wTo/ZsD8dlzmTmVNQzOuT7P6t0aam98Njwf7hF8dcvzvgjJWzUzDn4Vf\nMzq5EQHVtiUG69ehpLPnhK/IDV3JK5SGPoUxzukCgYAd8CzdWuGoYOr2c5QtfVDA\njFmcfnCeRZz4Cnbr95a6LVt0C4YyBdQuZIwFbJtO0qS/0P13piMVpdKC48dnLTBT\nAe5uylUr+cXQbmFjGjAJ4smw4Au38jVLK5zQwAD5xexcnu8lFwa/MQULV5sv3SRy\nnG4jgRyL4Rh/A3V7kGl+FQ==\n-----END PRIVATE KEY-----\n",
-  "client_email": "weather-data-bot@weather-project-503316.iam.gserviceaccount.com",
-  "client_id": "101540819571001473801",
-  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-  "token_uri": "https://oauth2.googleapis.com/token",
-  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
-  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/weather-data-bot%40weather-project-503316.iam.gserviceaccount.com",
-  "universe_domain": "googleapis.com"
-}
+settings -> secret and variables you will find there
 
 MY UPDATE.YML CODE
 -----------------------------------------------------------------------------------
