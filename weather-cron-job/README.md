@@ -145,8 +145,11 @@ SETTING UP GITHUB ACTION AND UPLOADING STUFFS
 weather-project-XXXXXX-XXXXXX.json FILE CONTENT
 -------------------------------------------------------
 This is a content when you will download the service account json
+
 You will also find the service mail over there 
-settings -> secret and variables you will find there
+
+1. Updating the secret -> settings -> secret variables -> edit the file
+2. setting the secret g cloud -> google cloud console -> IAM admin -> service account -> keys -> add keys
 
 MY UPDATE.YML CODE
 -----------------------------------------------------------------------------------
