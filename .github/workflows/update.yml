@@ -33,7 +33,7 @@ jobs:
 
     - name: Create Service Account File
       run: |
-        echo '${{ secrets.GCP_SERVICE_ACCOUNT }}' > weather-project-503316-7928a8a4716c.json
+        echo '${{ secrets.GCP_SERVICE_ACCOUNT }}' > weather-project-503316-b3c65e08b190.json
 
     - name: Run Weather Script
       run: |
