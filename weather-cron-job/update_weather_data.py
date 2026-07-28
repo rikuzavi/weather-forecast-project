@@ -9,7 +9,7 @@ from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
-SERVICE_ACCOUNT_FILE = "weather-project-503316-7928a8a4716c.json"
+SERVICE_ACCOUNT_FILE = "weather-project-service-account.json"
 FILE_LINK = "https://drive.google.com/file/d/1-SCP57A_QOQn0vFpoovMMQlEYDEJevsf/view?usp=drive_link"
 FILE_ID = "1-SCP57A_QOQn0vFpoovMMQlEYDEJevsf"
 # Authenticate
