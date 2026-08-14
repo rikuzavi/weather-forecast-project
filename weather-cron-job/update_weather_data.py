@@ -10,8 +10,8 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 SERVICE_ACCOUNT_FILE = "weather-project-service-account.json"
-FILE_LINK = "https://drive.google.com/file/d/1-SCP57A_QOQn0vFpoovMMQlEYDEJevsf/view?usp=drive_link"
-FILE_ID = "1-SCP57A_QOQn0vFpoovMMQlEYDEJevsf"
+FILE_LINK = "https://drive.google.com/file/d/12Eijy87QCseHV7kH82gKcXRDcMFbxnCv/view?usp=drive_link"
+FILE_ID = "12Eijy87QCseHV7kH82gKcXRDcMFbxnCv"
 # Authenticate
 creds = service_account.Credentials.from_service_account_file(
     SERVICE_ACCOUNT_FILE,
@@ -43,7 +43,7 @@ df_output = getdata()
 ist = ZoneInfo("Asia/Kolkata")
 yesterday = (datetime.now(ist) - timedelta(days=1)).strftime("%Y-%m-%d")
 print(yesterday)
-df = pd.read_json("./westbengal_cities.json")
+df = pd.read_json("./india_cities.json")
 for city in df:
 
     lat = df[city]["lat"]
