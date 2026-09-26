@@ -7,13 +7,14 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from huggingface_hub import login, hf_hub_download, HfApi
+import os
 
 
 # ============================================================
 # HUGGING FACE CONFIGURATION
 # ============================================================
 
-HF_TOKEN = "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"
+HF_TOKEN = os.environ["HF_TOKEN"]
 
 REPO_ID = "rikuzavi/weather-data"
 
