@@ -1,53 +1,102 @@
+import io
 import json
+import time
 import pandas as pd
 import requests
-import time
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from huggingface_hub import login, hf_hub_download, HfApi
-import os
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import (
+    MediaIoBaseDownload,
+    MediaIoBaseUpload
+)
 
 
 # ============================================================
-# HUGGING FACE CONFIGURATION
+# CONFIGURATION
 # ============================================================
 
-HF_TOKEN = os.environ["HF_TOKEN"]
+SERVICE_ACCOUNT_FILE = "weather-project-service-account.json"
 
-REPO_ID = "rikuzavi/weather-data"
+FILE_ID = "12Eijy87QCseHV7kH82gKcXRDcMFbxnCv"
 
-FILE_NAME = "india_param.json"
-
-
-# Login to Hugging Face
-login(HF_TOKEN)
-
-api = HfApi()
+INDIA_CITIES_FILE = "india_cities.json"
 
 
 # ============================================================
-# GET DATA FROM HUGGING FACE
+# GOOGLE DRIVE AUTHENTICATION
+# ============================================================
+
+creds = service_account.Credentials.from_service_account_file(
+    SERVICE_ACCOUNT_FILE,
+    scopes=[
+        "https://www.googleapis.com/auth/drive"
+    ]
+)
+
+service = build(
+    "drive",
+    "v3",
+    credentials=creds
+)
+
+
+# ============================================================
+# READ DATA FROM GOOGLE DRIVE
 # ============================================================
 
 def getdata():
 
-    print("Reading data from Hugging Face...")
+    print("Reading data from Google Drive...")
 
-    file_path = hf_hub_download(
-        repo_id=REPO_ID,
-        filename=FILE_NAME,
-        repo_type="dataset",
-        token=HF_TOKEN
+    request = service.files().get_media(
+        fileId=FILE_ID
     )
 
-    with open(file_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    fh = io.BytesIO()
+
+    downloader = MediaIoBaseDownload(
+        fh,
+        request
+    )
+
+    done = False
+
+    while not done:
+
+        status, done = downloader.next_chunk()
+
+        if status:
+            print(
+                f"Download progress: "
+                f"{int(status.progress() * 100)}%"
+            )
+
+    fh.seek(0)
+
+    data = json.load(fh)
 
     print("Data loaded successfully.")
 
     return data
+
+
+# ============================================================
+# GET YESTERDAY'S DATE
+# ============================================================
+
+ist = ZoneInfo("Asia/Kolkata")
+
+yesterday = (
+    datetime.now(ist) - timedelta(days=1)
+).strftime("%Y-%m-%d")
+
+print()
+print("Updating data for:", yesterday)
+print()
 
 
 # ============================================================
@@ -58,167 +107,232 @@ df_output = getdata()
 
 
 # ============================================================
-# YESTERDAY DATE
+# LOAD CITY COORDINATES
 # ============================================================
 
-ist = ZoneInfo("Asia/Kolkata")
+print("Reading city coordinates...")
 
-yesterday = (
-    datetime.now(ist) - timedelta(days=1)
-).strftime("%Y-%m-%d")
+df = pd.read_json(
+    INDIA_CITIES_FILE
+)
 
-print("Updating data for:", yesterday)
+print(
+    f"Found {len(df.columns)} cities."
+)
 
-
-# ============================================================
-# READ CITY COORDINATES
-# ============================================================
-
-df = pd.read_json("./india_cities.json")
+print()
 
 
 # ============================================================
-# GET WEATHER DATA FOR EACH CITY
+# UPDATE EACH CITY
 # ============================================================
 
 for city in df:
 
     try:
 
+        # ----------------------------------------------------
+        # GET LATITUDE AND LONGITUDE
+        # ----------------------------------------------------
+
         lat = df[city]["lat"]
         lon = df[city]["lon"]
 
-        print(f"Processing {city}...")
+        print(
+            f"Processing {city}..."
+        )
 
 
         # ----------------------------------------------------
-        # OPEN-METEO ARCHIVE URL
+        # OPEN-METEO URL
         # ----------------------------------------------------
 
         url = (
-            f"https://archive-api.open-meteo.com/v1/archive"
+            "https://archive-api.open-meteo.com/v1/archive"
             f"?latitude={lat}"
             f"&longitude={lon}"
             f"&start_date={yesterday}"
             f"&end_date={yesterday}"
-            f"&hourly="
-            f"temperature_2m,"
-            f"relative_humidity_2m,"
-            f"dew_point_2m,"
-            f"surface_pressure,"
-            f"precipitation,"
-            f"rain,"
-            f"snowfall,"
-            f"cloud_cover,"
-            f"wind_speed_10m,"
-            f"wind_gusts_10m,"
-            f"wind_direction_10m,"
-            f"shortwave_radiation"
-            f"&timezone=auto"
+            "&hourly="
+            "temperature_2m,"
+            "relative_humidity_2m,"
+            "dew_point_2m,"
+            "surface_pressure,"
+            "precipitation,"
+            "rain,"
+            "snowfall,"
+            "cloud_cover,"
+            "wind_speed_10m,"
+            "wind_gusts_10m,"
+            "wind_direction_10m,"
+            "shortwave_radiation"
+            "&timezone=auto"
         )
 
 
         # ----------------------------------------------------
-        # REQUEST DATA
+        # REQUEST WITH RETRIES
         # ----------------------------------------------------
 
-        res = requests.get(
-            url,
-            timeout=60
-        )
+        success = False
+
+        for attempt in range(3):
+
+            try:
+
+                response = requests.get(
+                    url,
+                    timeout=60
+                )
+
+                if response.status_code == 200:
+
+                    success = True
+                    break
+
+                else:
+
+                    print(
+                        f"{city}: "
+                        f"HTTP {response.status_code}"
+                    )
+
+            except requests.exceptions.Timeout:
+
+                print(
+                    f"{city}: "
+                    f"Timeout "
+                    f"(attempt {attempt + 1}/3)"
+                )
+
+            except requests.exceptions.RequestException as e:
+
+                print(
+                    f"{city}: "
+                    f"Request error "
+                    f"(attempt {attempt + 1}/3): "
+                    f"{e}"
+                )
+
+            # Wait before retry
+
+            if attempt < 2:
+
+                time.sleep(5)
 
 
-        if res.status_code != 200:
+        # ----------------------------------------------------
+        # SKIP CITY IF ALL RETRIES FAILED
+        # ----------------------------------------------------
+
+        if not success:
 
             print(
-                f"{city}: Failed "
-                f"({res.status_code})"
+                f"✗ {city}: "
+                "Failed after 3 attempts"
             )
 
             continue
 
 
-        hourly = res.json()["hourly"]
+        # ----------------------------------------------------
+        # GET JSON RESPONSE
+        # ----------------------------------------------------
+
+        hourly = response.json()["hourly"]
 
 
         # ----------------------------------------------------
-        # UPDATE CITY DATA
+        # UPDATE WEATHER ARRAYS
         # ----------------------------------------------------
 
         for key in df_output[city]["daily"]:
 
-            # Add new 24 hours
+            # Add yesterday's 24 hours
+
             df_output[city]["daily"][key].extend(
                 hourly[key]
             )
 
-            # Keep only the required amount
+
             # Remove oldest 24 hours
+
             df_output[city]["daily"][key] = (
                 df_output[city]["daily"][key][24:]
             )
 
 
-        print(f"✓ {city}")
+        print(
+            f"✓ {city}"
+        )
 
 
     except Exception as e:
 
         print(
-            f"Problem with {city}:",
-            e
+            f"Problem with {city}: {e}"
         )
 
+        continue
+
 
 # ============================================================
-# SAVE UPDATED JSON
+# WEATHER UPDATE FINISHED
 # ============================================================
 
+print()
 print("Weather update completed.")
-
-print("Preparing file for upload...")
-
-
-with open(
-    FILE_NAME,
-    "w",
-    encoding="utf-8"
-) as f:
-
-    json.dump(
-        df_output,
-        f,
-        ensure_ascii=False
-    )
+print()
 
 
 # ============================================================
-# UPLOAD TO HUGGING FACE
+# CONVERT JSON TO MEMORY
 # ============================================================
 
-print("Uploading to Hugging Face...")
+json_data = json.dumps(
+    df_output,
+    ensure_ascii=False
+)
 
+
+# ============================================================
+# UPLOAD UPDATED DATA TO GOOGLE DRIVE
+# ============================================================
+
+print(
+    "Uploading updated data to Google Drive..."
+)
+
+
+media = MediaIoBaseUpload(
+    io.BytesIO(
+        json_data.encode("utf-8")
+    ),
+    mimetype="application/json",
+    resumable=True
+)
+
+
+# ============================================================
+# UPLOAD WITH RETRIES
+# ============================================================
+
+upload_success = False
 
 for attempt in range(5):
 
     try:
 
-        api.upload_file(
+        service.files().update(
+            fileId=FILE_ID,
+            media_body=media
+        ).execute()
 
-            path_or_fileobj=FILE_NAME,
+        upload_success = True
 
-            path_in_repo=FILE_NAME,
-
-            repo_id=REPO_ID,
-
-            repo_type="dataset",
-
-            commit_message="Update weather data"
-
+        print(
+            "Upload completed successfully."
         )
-
-
-        print("Upload completed successfully.")
 
         break
 
@@ -227,14 +341,35 @@ for attempt in range(5):
 
         print(
             f"Upload attempt "
-            f"{attempt + 1} failed:",
-            e
+            f"{attempt + 1}/5 failed:"
         )
 
+        print(e)
 
-        if attempt == 4:
+        if attempt < 4:
 
-            raise
+            print(
+                "Retrying in 10 seconds..."
+            )
+
+            time.sleep(10)
 
 
-        time.sleep(10)
+# ============================================================
+# FINAL STATUS
+# ============================================================
+
+if not upload_success:
+
+    print(
+        "ERROR: Failed to upload "
+        "updated data to Google Drive."
+    )
+
+    raise Exception(
+        "Google Drive upload failed."
+    )
+
+
+print()
+print("Weather data update finished successfully.")
