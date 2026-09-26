@@ -1,159 +1,427 @@
-# CRON JOB FOR WEST BENGAL WEATHER PARAMETER
+# CRON JOB FOR WEATHER PARAMETERS
 
-# GOOGLE DRIVE AND SERVICE ACCOUNT INTEGRATION
+This directory contains the scheduled weather-data update system for the weather forecast project.
 
-Every 1AM the GitHub triggers the code and workflow job it takes the data, modify it, push it to Drive 
+The GitHub Actions workflow runs automatically every **1:00 AM IST**. It retrieves the existing weather dataset from **Hugging Face**, fetches the previous day's weather data from **Open-Meteo**, updates the dataset, and uploads the updated JSON back to Hugging Face.
 
+---
+
+# HUGGING FACE INTEGRATION
+
+The project uses a Hugging Face Dataset Repository as the storage location for the weather data.
+
+The workflow:
+
+```text
 GitHub Repository
-
         │
         ▼
 GitHub Actions starts automatically
-
         │
         ▼
-Installs Python and required packages
-
+Install Python and required packages
         │
         ▼
-Creates service_account.json from GitHub Secret
-
+Load HF_TOKEN from GitHub Secrets
         │
         ▼
-Runs your Python script
-
+Run update_weather_data.py
         │
         ▼
-Downloads/updates weather data
-
+Read existing weather JSON
+from Hugging Face
         │
         ▼
-Uploads the updated JSON back to Google Drive
-
+Fetch previous day's weather
+from Open-Meteo
+        │
+        ▼
+Update weather data
+        │
+        ▼
+Upload updated JSON
+to Hugging Face
         │
         ▼
 Workflow finishes
+```
 
-PROCEDURE FOR THE WORKFLOW 
------------------------------------------------------------------------------------------
-a) Take the Data first time and save it to google drive
-b) Create a service account in GOOGLE CLOUD CONSOLE
-c) after creating keys and dummy email give permission to the specific folder to access
-d) write the connection code and updating code in python  
-e) setup GitHub and add the files under folders and set it for workflows
-f) run the workflow for once then let it run itself at a particular time 
+---
 
-FILE STRUCTURE 
--------------------------------
+# DATA FLOW
+
+The complete process is:
+
+```text
+                    GitHub Actions
+                          │
+                          ▼
+                 update_weather_data.py
+                          │
+             ┌────────────┴────────────┐
+             ▼                         ▼
+       Hugging Face              Open-Meteo
+       Existing Data             Archive API
+             │                         │
+             │                         │
+             └──────────┬──────────────┘
+                        ▼
+                 Update Weather
+                     Data
+                        │
+                        ▼
+                 Hugging Face
+                 Updated JSON
+```
+
+The script does not use Google Drive anymore.
+
+---
+
+# PROCEDURE FOR THE WORKFLOW
+
+The setup process is:
+
+1. Create the initial weather dataset.
+2. Create a Hugging Face account.
+3. Create a Hugging Face Dataset Repository.
+4. Upload the initial JSON file to Hugging Face.
+5. Create a Hugging Face Access Token with **Write** permission.
+6. Create a GitHub repository/workflow for the cron job.
+7. Add the Hugging Face token to GitHub Actions Secrets.
+8. Add the Python script, city data and `requirements.txt`.
+9. Configure the GitHub Actions workflow.
+10. Run the workflow manually once using `workflow_dispatch`.
+11. Verify that the weather data was updated.
+12. Allow GitHub Actions to execute automatically every day.
+
+---
+
+# FILE STRUCTURE
+
+```text
 weather-cron-job
+│
+├── requirements.txt
+│
+├── update_weather_data.py
+│
+├── india_cities.json
+│
+└── .github
+    │
+    └── workflows
+        │
+        └── update.yml
+```
 
-| ----requirements.txt
+The Hugging Face dataset is stored separately:
 
-| ----update_weather_data.py
+```text
+Hugging Face Dataset Repository
+│
+└── india_param.json
+```
 
-| ----westbengal_cities.json
+No Hugging Face token should be stored inside the repository.
 
-| ----weather-project-XXXXXX-XXXXXX.json (Hidden, gitignore, shouldn't be uploaded)
+---
 
-SERVICE ACCOUNT CREATION
----------------------------------------------------------------------------------------------------------------
-service account is created cause it will act as a bot mail to fetch the data and change the drive file for us 
+# HUGGING FACE DATASET SETUP
 
-1. Open https://console.cloud.google.com/
-2. Sign in with your Google account.
-3. Click the Project drop-down at the top.
-4. Click "New Project".
-5. Enter a project name (e.g., weather-project).
-6. Click "Create".
-7. Select the newly created project.
-8. From the left menu, go to:
-   APIs & Services → Library
-9. Search for "Google Drive API".
-10. Open Google Drive API and click "Enable".
-11. (Optional) If you will use Google Sheets, search for "Google Sheets API" and click "Enable".
-12. From the left menu, go to:
-    IAM & Admin → Service Accounts
-13. Click "Create Service Account".
-14. Enter a Service Account Name (e.g., weather-data-bot).
-15. Click "Create and Continue".
-16. Choose a role (e.g., Basic → Editor).
-17. Click "Continue".
-18. Skip the optional user access section by clicking "Done".
-19. In the Service Accounts list, click the newly created service account.
-20. Open the "Keys" tab.
-21. Click "Add Key".
-22. Select "Create New Key".
-23. Choose "JSON" as the key type.
-24. Click "Create".
-25. The JSON key file will automatically download to your computer.
-26. Move the downloaded JSON file into your project folder.
-27. Keep this JSON file private and never upload it to GitHub or share it publicly.
+## 1. Create a Hugging Face account
 
-PERMISSION FOR A SPECIFIC FILE TO SERVICE ACCOUNT
---------------------------------------------------------------
-1. Open Google Drive.
-2. Locate the file you want the service account to access.
-3. Right-click the file.
-4. Click "Share".
-5. In the "Add people and groups" field, enter the service account email address.
-   Example:
-   weather-data-bot@weather-project-xXXXXX.iam.gserviceaccount.com
-6. Select the appropriate permission:
-   - Viewer (read only)
-   - Commenter
-   - Editor (read and update the file)
-7. Click "Send" or "Share".
-8. Wait a few seconds for the permissions to be applied.
-9. In your Python code, use the file's Google Drive File ID to access the file.
-10. The service account can now read or modify that specific file according to the permission you granted. 
+Open:
 
-SETTING UP GITHUB ACTION AND UPLOADING STUFFS
--------------------------------------------------------------------
-1. Create a new repository on GitHub.
-2. Upload your project files, for example:
-   - update_weather_data.py
-   - requirements.txt
-   - westbengal_cities.json
-   - Any other required files
-3. Do NOT upload the service account JSON file.
-4. Open your GitHub repository.
-5. Go to:
-   Settings → Secrets and variables → Actions
-6. Click "New repository secret".
-7. Enter the secret name:
-   GCP_SERVICE_ACCOUNT
-8. Open your downloaded service account JSON file in a text editor.
-9. Copy the ENTIRE contents of the JSON file.
-10. Paste the copied JSON into the "Secret" value box.
-11. Click "Add secret".
-12. In your project, create the following folder structure using GitHub(do not upload it):
-   .github/
-       workflows/
-           update.yml
-13. Inside update.yml, add your GitHub Actions workflow code(consult cgpt)
-14. In the workflow, create the JSON file from the secret using:
-   echo '${{ secrets.GOOGLE_CREDENTIALS }}' > service_account.json
-15. Use "service_account.json" in your Python code as the credentials file.
-16. Commit and push all project files (except the JSON key).
-17. Open the GitHub repository.
-18. Go to the "Actions" tab.
-19. Select your workflow.
-20. Click "Run workflow" if it uses workflow_dispatch, or wait for the scheduled time if it runs automatically.
-21. Check the workflow logs to verify that the script executed successfully.
-22. See the error logs and verify it 
+https://huggingface.co/
 
-weather-project-XXXXXX-XXXXXX.json FILE CONTENT
--------------------------------------------------------
-This is a content when you will download the service account json
+Create an account or sign in.
 
-You will also find the service mail over there 
+---
 
-1. Updating the secret -> settings -> secret variables -> edit the file
-2. setting the secret g cloud -> google cloud console -> IAM admin -> service account -> keys -> add keys
+## 2. Create a Dataset Repository
 
-MY UPDATE.YML CODE
------------------------------------------------------------------------------------
+From Hugging Face:
 
+```text
+New → Dataset
+```
+
+Create a repository, for example:
+
+```text
+weather-data
+```
+
+The repository will have a URL similar to:
+
+```text
+https://huggingface.co/datasets/YOUR_USERNAME/weather-data
+```
+
+---
+
+## 3. Upload the initial JSON
+
+Upload:
+
+```text
+india_param.json
+```
+
+The repository should contain:
+
+```text
+weather-data
+│
+├── india_param.json
+└── README.md
+```
+
+---
+
+# HUGGING FACE ACCESS TOKEN
+
+The Python script needs permission to read and update the dataset.
+
+1. Open:
+
+https://huggingface.co/settings/tokens
+
+2. Create a new Access Token.
+3. Give it a name, for example:
+
+```text
+weather-project
+```
+
+4. Select **Write** permission.
+5. Create the token.
+6. Copy the token beginning with:
+
+```text
+hf_
+```
+
+Keep the token private.
+
+Do not put it directly inside:
+
+```text
+update_weather_data.py
+```
+
+and do not commit it to GitHub.
+
+---
+
+# ADDING HUGGING FACE TOKEN TO GITHUB
+
+Open the GitHub repository.
+
+Go to:
+
+```text
+Settings
+    ↓
+Secrets and variables
+    ↓
+Actions
+```
+
+Click:
+
+```text
+New repository secret
+```
+
+Use:
+
+```text
+Name:
+HF_TOKEN
+```
+
+For the value, paste your Hugging Face Access Token:
+
+```text
+hf_xxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+Click:
+
+```text
+Add secret
+```
+
+GitHub will then provide the token to the workflow without exposing its value in the repository.
+
+---
+
+# PYTHON SCRIPT
+
+The Python script performs the following operations:
+
+```text
+1. Authenticate with Hugging Face
+2. Read india_param.json
+3. Calculate yesterday's date
+4. Read city coordinates
+5. Request previous day's data from Open-Meteo
+6. Add the new 24 hours of data
+7. Remove the oldest 24 hours
+8. Save the updated JSON
+9. Upload the JSON to Hugging Face
+```
+
+The main file is:
+
+```text
+update_weather_data.py
+```
+
+---
+
+# REQUIREMENTS.TXT
+
+The project uses:
+
+```text
+pandas==2.3.2
+requests==2.32.5
+huggingface_hub==0.34.4
+```
+
+`requirements.txt`:
+
+```text
+pandas==2.3.2
+requests==2.32.5
+huggingface_hub==0.34.4
+```
+
+Google Drive and Google Cloud packages are no longer required.
+
+---
+
+# HUGGING FACE CONFIGURATION IN PYTHON
+
+The token is read from the environment rather than being written directly into the Python file.
+
+```python
+import os
+
+HF_TOKEN = os.environ["HF_TOKEN"]
+
+REPO_ID = "YOUR_USERNAME/weather-data"
+
+FILE_NAME = "india_param.json"
+```
+
+The GitHub Actions workflow provides:
+
+```text
+HF_TOKEN
+```
+
+to the Python program.
+
+---
+
+# READING DATA FROM HUGGING FACE
+
+The dataset can be read using:
+
+```python
+from huggingface_hub import hf_hub_download
+
+file_path = hf_hub_download(
+    repo_id=REPO_ID,
+    filename=FILE_NAME,
+    repo_type="dataset",
+    token=HF_TOKEN
+)
+```
+
+Then:
+
+```python
+import json
+
+with open(file_path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+```
+
+For example:
+
+```python
+kolkata = data["Kolkata"]
+
+print(kolkata["lat"])
+print(kolkata["lon"])
+```
+
+Weather parameters can be accessed through:
+
+```python
+data["Kolkata"]["daily"]
+```
+
+---
+
+# UPLOADING DATA TO HUGGING FACE
+
+After modifying the JSON:
+
+```python
+api.upload_file(
+    path_or_fileobj=FILE_NAME,
+    path_in_repo=FILE_NAME,
+    repo_id=REPO_ID,
+    repo_type="dataset",
+    commit_message="Update weather data"
+)
+```
+
+This creates a new commit in the Hugging Face Dataset Repository.
+
+---
+
+# SETTING UP GITHUB ACTION
+
+The workflow file is:
+
+```text
+.github/workflows/update.yml
+```
+
+The workflow automatically executes every day at:
+
+```text
+1:00 AM IST
+```
+
+The cron expression is:
+
+```yaml
+cron: '30 19 * * *'
+```
+
+GitHub Actions uses UTC, so:
+
+```text
+19:30 UTC
+     ↓
+01:00 IST
+```
+
+on the following day.
+
+---
+
+# MY UPDATE.YML CODE
+
+```yaml
 name: Weather Update
 
 on:
@@ -187,10 +455,324 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Create Service Account File
-      run: |
-        echo '${{ secrets.GCP_SERVICE_ACCOUNT }}' > weather-project-503316-7928a8a4716c.json
-
     - name: Run Weather Script
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
         python update_weather_data.py
+```
+
+---
+
+# WHY THE SERVICE ACCOUNT IS NO LONGER REQUIRED
+
+The previous implementation used:
+
+```text
+Google Cloud
+      │
+      ▼
+Service Account
+      │
+      ▼
+Google Drive API
+      │
+      ▼
+Weather JSON
+```
+
+The new implementation uses:
+
+```text
+GitHub Actions
+      │
+      ▼
+HF_TOKEN
+      │
+      ▼
+Hugging Face Hub
+      │
+      ▼
+Weather JSON
+```
+
+Therefore these are no longer required:
+
+```text
+weather-project-XXXXXX-XXXXXX.json
+GCP_SERVICE_ACCOUNT
+Google Drive API
+Google Cloud Service Account
+google-api-python-client
+google-auth
+google-auth-httplib2
+google-auth-oauthlib
+```
+
+---
+
+# RUNNING THE WORKFLOW MANUALLY
+
+The workflow contains:
+
+```yaml
+workflow_dispatch:
+```
+
+This allows you to run it manually.
+
+Go to:
+
+```text
+GitHub Repository
+    ↓
+Actions
+    ↓
+Weather Update
+    ↓
+Run workflow
+```
+
+GitHub will start the workflow.
+
+Check the logs for:
+
+```text
+Reading data from Hugging Face...
+Data loaded successfully.
+Updating data for: YYYY-MM-DD
+Processing Kolkata...
+✓ Kolkata
+...
+waiting to upload
+Upload completed successfully.
+```
+
+---
+
+# DAILY AUTOMATIC UPDATE
+
+After the workflow has been tested successfully, GitHub Actions will execute it automatically according to:
+
+```yaml
+- cron: '30 19 * * *'
+```
+
+The intended schedule is:
+
+```text
+Every day
+1:00 AM IST
+```
+
+The workflow can also be triggered manually at any time.
+
+---
+
+# WEATHER DATA UPDATE LOGIC
+
+For every city, the script:
+
+```text
+Existing data
+      │
+      ▼
+Remove oldest 24 hours
+      │
+      ▼
+Fetch previous day's 24 hours
+      │
+      ▼
+Append new 24 hours
+      │
+      ▼
+Save updated data
+```
+
+For example:
+
+```text
+Before:
+
+Hour 1 ───────────── Hour N
+   │
+   └── oldest data
+
+After:
+
+Hour 25 ──────────── Hour N + 24
+                      │
+                      └── newest data
+```
+
+This maintains a rolling weather-data window.
+
+---
+
+# OPEN-METEO
+
+Historical weather data is retrieved from the Open-Meteo Archive API.
+
+The script requests parameters including:
+
+```text
+temperature_2m
+relative_humidity_2m
+dew_point_2m
+surface_pressure
+precipitation
+rain
+snowfall
+cloud_cover
+wind_speed_10m
+wind_gusts_10m
+wind_direction_10m
+shortwave_radiation
+```
+
+The request is made separately for each city.
+
+---
+
+# ERROR HANDLING
+
+If Open-Meteo fails for one city, the script continues processing the remaining cities.
+
+For example:
+
+```text
+Processing Gangtok...
+Problem with Gangtok: HTTPSConnectionPool(...): Read timed out
+
+Processing Imphal...
+✓ Imphal
+```
+
+A failure for one city does not necessarily stop the complete workflow.
+
+The script can also retry requests when a timeout occurs.
+
+---
+
+# GITHUB SECRETS
+
+The repository should contain only non-sensitive configuration.
+
+### Required GitHub Secret
+
+```text
+HF_TOKEN
+```
+
+### Do NOT commit
+
+```text
+hf_...
+```
+
+or any other private access token.
+
+The token should only be stored in:
+
+```text
+GitHub → Settings → Secrets and variables → Actions
+```
+
+---
+
+# SECURITY
+
+Never commit the Hugging Face Access Token to GitHub.
+
+Bad:
+
+```python
+HF_TOKEN = "hf_xxxxxxxxxxxxxxxxx"
+```
+
+Good:
+
+```python
+import os
+
+HF_TOKEN = os.environ["HF_TOKEN"]
+```
+
+The GitHub Actions workflow provides it securely:
+
+```yaml
+env:
+  HF_TOKEN: ${{ secrets.HF_TOKEN }}
+```
+
+---
+
+# FINAL PROJECT STRUCTURE
+
+```text
+weather-forecast-project
+│
+├── weather-cron-job
+│   │
+│   ├── requirements.txt
+│   ├── update_weather_data.py
+│   ├── india_cities.json
+│   │
+│   └── .github
+│       │
+│       └── workflows
+│           │
+│           └── update.yml
+│
+└── ...
+```
+
+Hugging Face:
+
+```text
+Hugging Face
+│
+└── weather-data
+    │
+    ├── india_param.json
+    └── README.md
+```
+
+---
+
+# COMPLETE SYSTEM
+
+```text
+                    ┌─────────────────────┐
+                    │    GitHub Actions   │
+                    │                     │
+                    │   1:00 AM IST       │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ update_weather_data │
+                    │        .py          │
+                    └───────┬─────┬───────┘
+                            │     │
+                 Read data  │     │ Fetch weather
+                            │     │
+                            ▼     ▼
+                   ┌──────────┐ ┌──────────┐
+                   │Hugging   │ │Open-     │
+                   │Face      │ │Meteo     │
+                   └────┬─────┘ └────┬─────┘
+                        │             │
+                        └──────┬──────┘
+                               ▼
+                       Update JSON Data
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │     Hugging Face    │
+                    │                     │
+                    │ india_param.json    │
+                    └─────────────────────┘
+```
+
+The result is a daily automated weather-data pipeline with **GitHub Actions as the scheduler, Open-Meteo as the historical weather-data source, and Hugging Face as the dataset storage**.
