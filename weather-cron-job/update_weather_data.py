@@ -13,9 +13,9 @@ from huggingface_hub import login, hf_hub_download, HfApi
 # HUGGING FACE CONFIGURATION
 # ============================================================
 
-HF_TOKEN = "hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+HF_TOKEN = "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"
 
-REPO_ID = "YOUR_USERNAME/weather-data"
+REPO_ID = "rikuzavi/weather-data"
 
 FILE_NAME = "india_param.json"
 
